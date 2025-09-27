@@ -109,6 +109,10 @@ class SmartDocChecker {
             if (docStat) docStat.textContent = docCount;
             const reportStat = document.querySelector('#billing-page .usage-stats .stat-card:nth-child(2) h4');
             if (reportStat) reportStat.textContent = reportCount;
+            // Hours Saved
+            const hoursSaved = this.calculateTimeSaved(docCount);
+            const hoursSavedStat = document.querySelector('#billing-page .usage-stats .stat-card:nth-child(3) h4');
+            if (hoursSavedStat) hoursSavedStat.textContent = hoursSaved;
         }
         this.currentPage = pageId;
     }
@@ -774,6 +778,14 @@ class SmartDocChecker {
             case 'warning': return '#f59e0b';
             default: return '#2563eb';
         }
+    }
+    
+    calculateTimeSaved(docCount) {
+        // Assume each document saves 2 minutes of manual review
+        const minutesSaved = docCount * 2;
+        // Convert to hours, rounded to one decimal
+        const hoursSaved = (minutesSaved / 60).toFixed(1);
+        return hoursSaved;
     }
 }
 
