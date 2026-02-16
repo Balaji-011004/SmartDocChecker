@@ -1,128 +1,132 @@
-# Document analysis endpoint
-from fastapi import UploadFile, File
-from typing import List
-import time,chardet
+"""
+SmartDocChecker API — Application entrypoint.
 
-
-import uvicorn
-from fastapi import FastAPI, WebSocket, Depends, HTTPException, status, UploadFile, File
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel
-from typing import List, Optional
+This file creates the FastAPI app, attaches middleware, and includes
+all sub-routers.  Run with:
+    uvicorn main:app --reload
+"""
 import logging
-from ai_engine import detect_contradiction, semantic_similarity, extract_entities
+from contextlib import asynccontextmanager
 
-app = FastAPI(title="SmartDocChecker API", description="Enterprise-grade contradiction detection API", version="1.0.0")
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
-# CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
-# Logging
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from config import settings
+from api.router import api_router
+from db.session import engine, SessionLocal
+from db.base import Base
+
+# ── Import models so Base.metadata knows about them ──
+from models.user import User
+from models.document import Document
+from models.contradiction import Contradiction
+from models.clause import Clause
+from models.comparison import ComparisonSession
+from models.cross_contradiction import CrossContradiction
+
+# ── Logging ──
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# JWT Auth
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
+# ── Rate Limiter ──
+limiter = Limiter(key_func=get_remote_address, default_limits=[settings.RATE_LIMIT_DEFAULT])
 
-class User(BaseModel):
-    username: str
-    role: str
 
-class Document(BaseModel):
-    id: str
-    name: str
-    status: str
-    upload_date: str
-    contradictions: List[str]
+# ── Lifespan: startup & shutdown logic ──
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Startup: create tables, warm models, seed admin."""
+    logger.info("Creating database tables (if they don't exist)…")
+    Base.metadata.create_all(bind=engine)
 
-class Contradiction(BaseModel):
-    id: str
-    type: str
-    description: str
-    confidence: float
-    document_id: str
+    from core.hashing import hash_password
 
-@app.post("/token")
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    # Replace with real user validation
-    if form_data.username == "admin" and form_data.password == "admin":
-        return {"access_token": "admin-token", "token_type": "bearer", "role": "admin"}
-    elif form_data.username == "user" and form_data.password == "user":
-        return {"access_token": "user-token", "token_type": "bearer", "role": "user"}
-    else:
-        raise HTTPException(status_code=400, detail="Invalid credentials")
+    db = SessionLocal()
+    try:
+        # ── Model Warming ──
+        logger.info("Warming AI models…")
+        from services.embedding_service import _load_sbert_model
+        from services.nli_service import _load_nli_model
+        _load_sbert_model()
+        _load_nli_model()
+        logger.info("AI models warmed and ready.")
 
-@app.get("/users/me", response_model=User)
-async def get_me(token: str = Depends(oauth2_scheme)):
-    # Replace with real token decoding
-    if token == "admin-token":
-        return User(username="admin", role="admin")
-    elif token == "user-token":
-        return User(username="user", role="user")
-    raise HTTPException(status_code=401, detail="Invalid token")
+        admin = db.query(User).filter(User.email == "admin@smartdoc.com").first()
+        if not admin:
+            import os
+            admin_password = os.environ.get("ADMIN_PASSWORD", "Admin123!")
+            admin = User(
+                name="Admin",
+                email="admin@smartdoc.com",
+                hashed_password=hash_password(admin_password),
+            )
+            db.add(admin)
+            db.commit()
+            logger.info("Seeded default admin user: admin@smartdoc.com")
+            if admin_password == "Admin123!":
+                logger.warning(
+                    "⚠  Admin seeded with DEFAULT password. "
+                    "Set ADMIN_PASSWORD env var for production!"
+                )
+        else:
+            logger.info("Admin user already exists, skipping seed.")
+    finally:
+        db.close()
 
-@app.post("/documents/upload")
-async def upload_document(file: UploadFile = File(...), token: str = Depends(oauth2_scheme)):
-    # Save file and process
-    logger.info(f"Received file: {file.filename}")
-    return {"id": "doc1", "name": file.filename, "status": "pending", "upload_date": "2025-09-21", "contradictions": []}
+    logger.info(f"✓ {settings.APP_NAME} v{settings.APP_VERSION} ready")
+    yield
+    logger.info("Shutting down SmartDocChecker API…")
 
-@app.get("/documents", response_model=List[Document])
-async def list_documents(token: str = Depends(oauth2_scheme)):
-    # Return mock documents
-    return [Document(id="doc1", name="Sample.pdf", status="completed", upload_date="2025-09-21", contradictions=["c1"])]
 
-@app.get("/contradictions", response_model=List[Contradiction])
-async def list_contradictions(token: str = Depends(oauth2_scheme)):
-    # Return mock contradictions
-    return [Contradiction(id="c1", type="temporal", description="Date mismatch", confidence=0.98, document_id="doc1")]
+# ── FastAPI app ──
+app = FastAPI(
+    title=settings.APP_NAME,
+    description="Enterprise-grade contradiction detection API",
+    version=settings.APP_VERSION,
+    lifespan=lifespan,
+    # Disable interactive API docs in production
+    docs_url="/docs" if settings.DEBUG else None,
+    redoc_url="/redoc" if settings.DEBUG else None,
+)
 
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    await websocket.accept()
-    await websocket.send_text("Processing started...")
-    await websocket.send_text("Processing completed!")
-    await websocket.close()
+# ── Rate Limiting Middleware ──
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-@app.post("/api/analyze")
-async def analyze(files: list[UploadFile] = File(...)):
-    texts = []
-    for file in files:
-        content = await file.read()
-        detected = chardet.detect(content)
-        encoding = detected['encoding']
-        
-        try:
-            if encoding:
-                text = content.decode(encoding)
-            else:
-                # Fallback to UTF-8 with error handling
-                text = content.decode('utf-8', errors='ignore')
-        except UnicodeDecodeError:
-            # Handle as binary or skip
-            text = content.decode('utf-8', errors='replace')
-        
-        texts.append(text)
-    results = []
-    for i in range(len(texts)):
-        for j in range(i+1, len(texts)):
-            contradiction = detect_contradiction(texts[i], texts[j])
-            similarity = semantic_similarity(texts[i], texts[j])
-            entities_i = extract_entities(texts[i])
-            entities_j = extract_entities(texts[j])
-            results.append({
-                "doc_pair": [i, j],
-                "contradiction_score": contradiction,
-                "similarity_score": similarity,
-                "entities_doc1": entities_i,
-                "entities_doc2": entities_j
-            })
-    return {"contradictions": results}
+# ── CORS ──
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept"],
+)
+
+
+# ── Security Headers Middleware ──
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    # Prevent caching of authenticated responses
+    if request.url.path.startswith("/api/"):
+        response.headers["Cache-Control"] = "no-store"
+    return response
+
+
+# ── Include all API routes ──
+app.include_router(api_router)
+

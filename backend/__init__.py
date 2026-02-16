@@ -1,0 +1,1 @@
+# SmartDocChecker Backend Application Package

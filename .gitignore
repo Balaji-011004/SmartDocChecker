@@ -25,10 +25,15 @@ dist-ssr
 *.sw?
 
 # Backend ignores
-backend/__pycache__/
+__pycache__/
+*.pyc
 backend/.env
 backend/logs/
 backend/*.sqlite3
 backend/*.db
 backend/.pytest_cache/
 backend/.mypy_cache/
+backend/.model_cache/
+
+venv/
+SmartDocChecker.zip

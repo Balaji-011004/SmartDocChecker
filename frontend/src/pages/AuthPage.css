@@ -1,0 +1,227 @@
+/* ═══════════════════════════════════════════════════════════
+   AuthPage – Centered card, soft shadows, clean validation
+   ═══════════════════════════════════════════════════════════ */
+
+.auth-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    background: #f8fafc;
+}
+
+/* Background circles */
+.auth-bg {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.auth-bg__circle {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.4;
+}
+
+.auth-bg__circle--1 {
+    width: 500px;
+    height: 500px;
+    background: #dbeafe;
+    top: -150px;
+    right: -100px;
+}
+
+.auth-bg__circle--2 {
+    width: 400px;
+    height: 400px;
+    background: #e0e7ff;
+    bottom: -120px;
+    left: -80px;
+}
+
+/* Card */
+.auth-card {
+    width: 100%;
+    max-width: 440px;
+    background: white;
+    border-radius: 20px;
+    padding: 2.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e2e8f0;
+    position: relative;
+    z-index: 1;
+    animation: authSlideIn 0.4s ease;
+}
+
+@keyframes authSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.auth-card__logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #0f172a;
+    text-decoration: none;
+    margin-bottom: 2rem;
+}
+
+.auth-card__logo i {
+    color: #2563eb;
+    font-size: 1.3rem;
+}
+
+.auth-card__title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #0f172a;
+    text-align: center;
+    margin-bottom: 0.4rem;
+    letter-spacing: -0.02em;
+}
+
+.auth-card__subtitle {
+    text-align: center;
+    color: #64748b;
+    font-size: 0.95rem;
+    margin-bottom: 1.75rem;
+}
+
+/* Error banner */
+.auth-error {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 1.25rem;
+}
+
+/* Form */
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.auth-select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    background: white;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    color: #0f172a;
+}
+
+.auth-select:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Toggle link */
+.auth-switch {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.auth-switch__btn {
+    background: none;
+    border: none;
+    color: #2563eb;
+    font-weight: 600;
+    cursor: pointer;
+    margin-left: 0.25rem;
+    font-family: inherit;
+    font-size: inherit;
+}
+
+.auth-switch__btn:hover {
+    text-decoration: underline;
+}
+
+/* ── Loading spinner (ProtectedRoute) ── */
+.auth-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    gap: 1rem;
+    color: #64748b;
+}
+
+.spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid #e2e8f0;
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Access denied (ProtectedRoute) */
+.access-denied {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    text-align: center;
+    gap: 1rem;
+    color: #64748b;
+}
+
+.access-denied i {
+    font-size: 3rem;
+    color: #ef4444;
+}
+
+.access-denied h2 {
+    font-size: 1.75rem;
+    color: #0f172a;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .auth-card {
+        padding: 1.75rem;
+        border-radius: 16px;
+    }
+
+    .auth-card__title {
+        font-size: 1.4rem;
+    }
+}

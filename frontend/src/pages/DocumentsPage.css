@@ -1,0 +1,536 @@
+/* ═══════════════════════════════════════════════════════════
+   DocumentsPage – Modern document management UI
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Header ── */
+.docs-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.docs-header__left h1 {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.docs-header__left h1 i {
+    color: #2563eb;
+    font-size: 1.5rem;
+}
+
+.docs-subtitle {
+    color: #64748b;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.docs-upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+}
+
+.docs-upload-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(37, 99, 235, 0.4);
+}
+
+.docs-upload-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.btn-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+/* ── Toolbar ── */
+.docs-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.docs-search {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 0.6rem 1rem;
+    flex: 1;
+    max-width: 400px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.docs-search:focus-within {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.docs-search i {
+    color: #94a3b8;
+    font-size: 0.875rem;
+}
+
+.docs-search input {
+    border: none;
+    outline: none;
+    font-size: 0.875rem;
+    color: #1e293b;
+    width: 100%;
+    background: transparent;
+}
+
+.docs-search input::placeholder {
+    color: #94a3b8;
+}
+
+.docs-toolbar__right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.docs-sort {
+    padding: 0.6rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    color: #475569;
+    background: #fff;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.docs-sort:focus {
+    border-color: #2563eb;
+}
+
+.docs-view-toggle {
+    display: flex;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.docs-view-toggle button {
+    padding: 0.55rem 0.75rem;
+    background: #fff;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.875rem;
+}
+
+.docs-view-toggle button.active {
+    background: #2563eb;
+    color: #fff;
+}
+
+.docs-view-toggle button:first-child {
+    border-right: 1px solid #e2e8f0;
+}
+
+/* ── Drop Zone ── */
+.docs-drop-zone {
+    position: relative;
+    min-height: 400px;
+}
+
+.docs-drag-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(37, 99, 235, 0.08);
+    border: 2px dashed #2563eb;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.docs-drag-overlay i {
+    font-size: 3rem;
+    color: #2563eb;
+    animation: float 1.5s ease-in-out infinite;
+}
+
+.docs-drag-overlay p {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2563eb;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+}
+
+/* ── Loading ── */
+.docs-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    gap: 1rem;
+}
+
+.docs-loading__spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e2e8f0;
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.docs-loading p {
+    color: #64748b;
+    font-size: 0.95rem;
+}
+
+/* ── Empty State ── */
+.docs-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    text-align: center;
+}
+
+.docs-empty__icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.docs-empty__icon i {
+    font-size: 2rem;
+    color: #2563eb;
+}
+
+.docs-empty h3 {
+    font-size: 1.2rem;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+}
+
+.docs-empty p {
+    color: #64748b;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+}
+
+.docs-empty__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.25rem;
+    background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.docs-empty__btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+}
+
+/* ═══════════════════════════════════════════════
+   Grid View
+   ═══════════════════════════════════════════════ */
+.docs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.25rem;
+}
+
+.doc-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.doc-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #2563eb, #7c3aed);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.doc-card:hover {
+    border-color: #c7d2fe;
+    box-shadow: 0 8px 30px rgba(37, 99, 235, 0.08);
+    transform: translateY(-2px);
+}
+
+.doc-card:hover::before {
+    opacity: 1;
+}
+
+.doc-card__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.doc-card__info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.doc-card__name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #1e293b;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.doc-card__date {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.doc-card__actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    padding-top: 0.5rem;
+    border-top: 1px solid #f1f5f9;
+}
+
+/* ── Status badges ── */
+.doc-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    width: fit-content;
+}
+
+.status-pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-processing {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.status-completed {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-failed {
+    background: #fecaca;
+    color: #991b1b;
+}
+
+/* ── Action buttons ── */
+.doc-action {
+    width: 36px;
+    height: 36px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #fff;
+    color: #64748b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+}
+
+.doc-action--download:hover {
+    background: #eff6ff;
+    color: #2563eb;
+    border-color: #bfdbfe;
+}
+
+.doc-action--delete:hover {
+    background: #fef2f2;
+    color: #ef4444;
+    border-color: #fecaca;
+}
+
+/* ═══════════════════════════════════════════════
+   List View
+   ═══════════════════════════════════════════════ */
+.docs-list {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.docs-list__header {
+    display: grid;
+    grid-template-columns: 1fr 140px 120px 100px;
+    padding: 0.8rem 1.25rem;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+}
+
+.docs-list__row {
+    display: grid;
+    grid-template-columns: 1fr 140px 120px 100px;
+    padding: 0.9rem 1.25rem;
+    align-items: center;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.15s ease;
+}
+
+.docs-list__row:last-child {
+    border-bottom: none;
+}
+
+.docs-list__row:hover {
+    background: #f8fafc;
+}
+
+.docs-list__col--name {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    overflow: hidden;
+}
+
+.docs-list__col--name i {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.docs-list__filename {
+    font-weight: 500;
+    color: #1e293b;
+    font-size: 0.9rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.docs-list__col--date {
+    color: #64748b;
+    font-size: 0.85rem;
+}
+
+.docs-list__col--actions {
+    display: flex;
+    gap: 0.4rem;
+    justify-content: flex-end;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    .docs-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .docs-search {
+        max-width: 100%;
+    }
+
+    .docs-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .docs-list__header,
+    .docs-list__row {
+        grid-template-columns: 1fr 100px 80px;
+    }
+
+    .docs-list__col--date {
+        display: none;
+    }
+
+    .docs-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
