@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 const AuthContext = createContext(null);
+const API_BASE = import.meta.env.VITE_API_BASE || '';
 
 /**
  * AuthProvider – wraps the app and provides authentication state.
@@ -22,7 +23,7 @@ export function AuthProvider({ children }) {
             return;
         }
 
-        fetch('/api/auth/me', {
+        fetch(`${API_BASE}/api/auth/me`, {
             headers: { Authorization: `Bearer ${token}` },
         })
             .then((res) => {
@@ -42,7 +43,7 @@ export function AuthProvider({ children }) {
     }, [token]);
 
     const login = useCallback(async (email, password) => {
-        const res = await fetch('/api/auth/login', {
+        const res = await fetch(`${API_BASE}/api/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password }),
@@ -64,7 +65,7 @@ export function AuthProvider({ children }) {
     }, []);
 
     const signup = useCallback(async (name, email, password) => {
-        const res = await fetch('/api/auth/register', {
+        const res = await fetch(`${API_BASE}/api/auth/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name, email, password }),
