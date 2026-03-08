@@ -49,19 +49,27 @@ async def lifespan(app: FastAPI):
 
     from core.hashing import hash_password
 
-    db = SessionLocal()
-    try:
-        # ── Model Warming ──
-        logger.info("Warming AI models…")
+    import asyncio
+
+    async def warm_models():
+        """Load AI models in the background to avoid blocking server readiness."""
+        logger.info("Starting background AI model warming…")
         try:
             from services.embedding_service import _load_sbert_model
             from services.nli_service import _load_nli_model
-            _load_sbert_model()
-            _load_nli_model()
-            logger.info("AI models warmed and ready.")
+            
+            # Use to_thread since these are CPU-bound and blocking
+            await asyncio.to_thread(_load_sbert_model)
+            await asyncio.to_thread(_load_nli_model)
+            
+            logger.info("AI models warmed and ready in background.")
         except Exception as e:
-            logger.error(f"Model warming failed: {e}")
-            logger.warning("App will start without pre-loaded models.")
+            logger.error(f"Background model warming failed: {e}")
+
+    db = SessionLocal()
+    try:
+        # ── Trigger Non-Blocking Model Warming ──
+        asyncio.create_task(warm_models())
 
         try:
             admin = db.query(User).filter(User.email == "admin@smartdoc.com").first()
